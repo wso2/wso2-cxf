@@ -66,7 +66,7 @@ import org.codehaus.stax2.validation.XMLValidationSchema;
  * Legacy implementation for Woostox 5.x. For Woodstox 6.2+, use W3CMultiSchemaFactory in
  * Woodstox itself.
  */
-@Deprecated(forRemoval = true, since = "4.2.1")
+@Deprecated
 public class W3CMultiSchemaFactory {
     private static final Logger LOG = LogUtils.getL7dLogger(W3CMultiSchemaFactory.class);
             

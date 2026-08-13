@@ -178,7 +178,7 @@ public class AttachmentUtilTest {
         String url = "http://" + domain + "/a/b/c";
 
         String actual = AttachmentUtil.createContentID(url);
-        assertThat(actual, endsWith("@" + URLEncoder.encode(domain, StandardCharsets.UTF_8)));
+        assertThat(actual, endsWith("@" + URLEncoder.encode(domain, StandardCharsets.UTF_8.name())));
     }
 
     private CachedOutputStream testSetStreamedAttachmentProperties(final String property, final Object value)

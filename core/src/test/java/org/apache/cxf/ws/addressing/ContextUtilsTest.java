@@ -287,7 +287,12 @@ public class ContextUtilsTest {
         log.addHandler(handler);
         logMethod.accept(log);
         handler.flush();
-        String logOutput = out.toString(StandardCharsets.UTF_8);
+        final String logOutput;
+        try {
+            logOutput = out.toString(StandardCharsets.UTF_8.name());
+        } catch (java.io.UnsupportedEncodingException e) {
+            throw new IllegalStateException(e);
+        }
         assertThat(
                 logOutput,
                 org.hamcrest.Matchers.containsString("WARNING: " + expected));

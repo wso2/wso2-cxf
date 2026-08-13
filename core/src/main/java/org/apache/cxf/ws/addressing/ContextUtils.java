@@ -647,6 +647,8 @@ public final class ContextUtils {
      */
     public static void logDisallowedDecoupledDestinationScheme(Logger logger, Level level, String destinationUri) {
         logger.logrb(level,
+                null,
+                null,
                 AddressingConstants.BUNDLE,
                 "DISALLOWED_DECOUPLED_DESTINATION_SCHEME",
                 new Object[] {
@@ -665,6 +667,8 @@ public final class ContextUtils {
      */
     public static void logRejectedDecoupledDestination(Logger logger, Level level, String destinationUri) {
         logger.logrb(level,
+                null,
+                null,
                 AddressingConstants.BUNDLE,
                 "REJECTED_DECOUPLED_DESTINATION",
                 new Object[] {
@@ -684,6 +688,8 @@ public final class ContextUtils {
      */
     public static void logDecoupledFaultToSchemeNotAllowed(Logger logger, Level level, String destinationUri) {
         logger.logrb(level,
+                null,
+                null,
                 AddressingConstants.BUNDLE,
                 "DECOUPLED_FAULT_TO_SCHEME_NOT_ALLOWED",
                 new Object[] {
@@ -702,6 +708,8 @@ public final class ContextUtils {
      */
     public static void logDecoupledFaultToNotAllowed(Logger logger, Level level, String destinationUri) {
         logger.logrb(level,
+                null,
+                null,
                 AddressingConstants.BUNDLE,
                 "DECOUPLED_FAULT_TO_NOT_ALLOWED",
                 new Object[] {

@@ -200,7 +200,7 @@ public class ClientFaultConverter extends AbstractInDatabindingInterceptor {
                     ReflectionUtil.setAccessible(f);
                     f.set(ex, fault.getMessage());
                 } catch (Exception e1) {
-                    if (isJdkException(ex.getClass().getPackageName())) {
+                    if (isJdkException(getPackageName(ex.getClass()))) {
                         ex = cloneJdkException(ex, message);
                     }
                 }
@@ -347,6 +347,12 @@ public class ClientFaultConverter extends AbstractInDatabindingInterceptor {
 
     private static boolean isJdkException(String pkg) {
         return pkg.startsWith("java.lang");
+    }
+
+    private static String getPackageName(Class<?> cls) {
+        final String name = cls.getName();
+        final int lastDot = name.lastIndexOf('.');
+        return lastDot < 0 ? "" : name.substring(0, lastDot);
     }
 
     private static StackTraceElement parseStackTrackLine(String oneLine) {

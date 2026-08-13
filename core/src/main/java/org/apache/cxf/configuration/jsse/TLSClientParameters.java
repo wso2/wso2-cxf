@@ -320,7 +320,7 @@ public class TLSClientParameters extends TLSParameterBase {
         return Arrays
             .stream(protocols.split(","))
             .map(String::trim)
-            .filter(Predicate.not(String::isEmpty))
+            .filter(s -> !s.isEmpty())
             .collect(Collectors.toCollection(LinkedHashSet::new));
     }
     

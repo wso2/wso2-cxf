@@ -382,7 +382,12 @@ public class AttachmentSerializer {
     // URL decoder would also decode '+' but according to  RFC-2392 we need to convert
     // only the % encoded character to their equivalent US-ASCII characters. 
     private static String decode(String s, Charset charset) {
-        return URLDecoder.decode(s.replaceAll("([^%])[+]", "$1%2B"), charset);
+        try {
+            return URLDecoder.decode(s.replaceAll("([^%])[+]", "$1%2B"), charset.name());
+        } catch (java.io.UnsupportedEncodingException e) {
+            // Charset::name is always a supported encoding name
+            throw new IllegalStateException(e);
+        }
     }
 
     // Try to decode the string assuming the decoding may fail, the original string is going to

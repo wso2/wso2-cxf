@@ -776,7 +776,7 @@ public class AttachmentDeserializerTest {
             () -> attachments.add(new AttachmentImpl("contentId")));
 
         assertThrows("Failure expected on too many attachments", RuntimeException.class, 
-            () -> attachments.addAll(List.of(new AttachmentImpl("contentId"))));
+            () -> attachments.addAll(Collections.singletonList(new AttachmentImpl("contentId"))));
     }
 
     @Test

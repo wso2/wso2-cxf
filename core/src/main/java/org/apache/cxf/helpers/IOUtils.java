@@ -442,7 +442,7 @@ public final class IOUtils {
     /**
      * @deprecated use {@link #readBytesFromStream(InputStream, int)}
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public static byte[] readBytesFromStream(InputStream in) throws IOException {
         return readBytesFromStream(in, -1);
     }

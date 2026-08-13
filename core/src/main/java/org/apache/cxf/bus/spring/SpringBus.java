@@ -159,7 +159,7 @@ public class SpringBus extends ExtensionManagerBus
 
         @Override
         public void onApplicationEvent(ApplicationEvent event) {
-            var springBus = springBusReference.get();
+            final SpringBus springBus = springBusReference.get();
             if (springBus != null) {
                 springBus.onApplicationEvent(event);
             }
