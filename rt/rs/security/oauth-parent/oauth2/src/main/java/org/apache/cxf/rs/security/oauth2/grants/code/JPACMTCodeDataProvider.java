@@ -19,14 +19,19 @@
 package org.apache.cxf.rs.security.oauth2.grants.code;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.LockModeType;
 
+import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.rs.security.oauth2.common.ServerAccessToken;
+import org.apache.cxf.rs.security.oauth2.common.UserSubject;
+import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.tokens.refresh.RefreshToken;
+import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 
 /**
  * Same as {@link JPACodeDataProvider} (stores Clients and tokens in a rdbms using
@@ -80,6 +85,7 @@ import org.apache.cxf.rs.security.oauth2.tokens.refresh.RefreshToken;
 public class JPACMTCodeDataProvider extends JPACodeDataProvider {
 
     private static final int DEFAULT_PESSIMISTIC_LOCK_TIMEOUT = 10000;
+    private static final String JPA_LOCK_TIMEOUT_HINT = "javax.persistence.lock.timeout";
 
     private int pessimisticLockTimeout = DEFAULT_PESSIMISTIC_LOCK_TIMEOUT;
     private boolean useJpaLockForExistingRefreshToken = true;
@@ -121,6 +127,28 @@ public class JPACMTCodeDataProvider extends JPACodeDataProvider {
     }
 
     @Override
+    protected RefreshToken revokeRefreshToken(Client client, UserSubject callerSubject, String refreshTokenKey) {
+        // Atomic find + validate + delete with lock timeout hint, parallel to removeCodeGrant.
+        final Map<String, Object> options = new HashMap<>();
+        options.put(JPA_LOCK_TIMEOUT_HINT, pessimisticLockTimeout);
+        return executeInTransaction(em -> {
+            RefreshToken refreshToken = em.find(RefreshToken.class, refreshTokenKey,
+                                                LockModeType.PESSIMISTIC_WRITE, options);
+            if (refreshToken != null) {
+                if (!refreshToken.getClient().getClientId().equals(client.getClientId())) {
+                    throw new OAuthServiceException(OAuthConstants.INVALID_GRANT);
+                }
+                if (callerSubject != null && refreshToken.getSubject() != null
+                    && !callerSubject.getLogin().equals(refreshToken.getSubject().getLogin())) {
+                    throw new OAuthServiceException(OAuthConstants.INVALID_GRANT);
+                }
+                em.remove(refreshToken);
+            }
+            return refreshToken;
+        });
+    }
+
+    @Override
     protected RefreshToken updateExistingRefreshToken(RefreshToken rt, ServerAccessToken at) {
         if (useJpaLockForExistingRefreshToken) {
             // lock RT for update
@@ -130,12 +158,37 @@ public class JPACMTCodeDataProvider extends JPACodeDataProvider {
         return super.updateExistingRefreshToken(rt, at);
     }
 
+    @Override
+    public ServerAuthorizationCodeGrant removeCodeGrant(final String code) throws OAuthServiceException {
+        return executeInTransaction(em -> findAndRemoveWithLock(code, em));
+    }
+
+    @Override
+    protected ServerAuthorizationCodeGrant removeCodeGrant(String code, EntityManager em,
+                                                           LockModeType lockModeType) throws OAuthServiceException {
+        return findAndRemoveWithLock(code, em);
+    }
+
+    private ServerAuthorizationCodeGrant findAndRemoveWithLock(String code, EntityManager em) {
+        final Map<String, Object> options = new HashMap<>();
+        options.put(JPA_LOCK_TIMEOUT_HINT, pessimisticLockTimeout);
+        ServerAuthorizationCodeGrant grant =
+                em.find(ServerAuthorizationCodeGrant.class, code, LockModeType.PESSIMISTIC_WRITE, options);
+        try {
+            if (grant != null) {
+                em.remove(grant);
+            }
+        } catch (javax.persistence.EntityNotFoundException e) {
+        }
+        return grant;
+    }
+
     protected void lockRefreshTokenForUpdate(final RefreshToken refreshToken) {
         try {
             execute(em -> {
                 final Map<String, Object> options;
                 if (pessimisticLockTimeout > 0) {
-                    options = Collections.singletonMap("javax.persistence.lock.timeout", pessimisticLockTimeout);
+                    options = Collections.singletonMap(JPA_LOCK_TIMEOUT_HINT, pessimisticLockTimeout);
                 } else {
                     options = Collections.emptyMap();
                 }
