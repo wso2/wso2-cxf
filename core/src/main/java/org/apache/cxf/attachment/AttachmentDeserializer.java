@@ -72,6 +72,13 @@ public class AttachmentDeserializer {
     public static final String ATTACHMENT_MAX_COUNT = "attachment-max-count";
 
     /**
+     * The maximum number of attachment headers permitted in a message. The default is 500.
+     */
+    public static final String ATTACHMENT_HEADERS_MAX_COUNT = "attachment-headers-max-count";
+    public static final int DEFAULT_ATTACHMENT_HEADERS_MAX_COUNT =
+        SystemPropertyAction.getInteger("org.apache.cxf.attachment-max-headers-count", 500);
+
+    /**
      * The maximum MIME Header Length. The default is 300.
      */
     public static final String ATTACHMENT_MAX_HEADER_SIZE = "attachment-max-header-size";
@@ -108,6 +115,7 @@ public class AttachmentDeserializer {
     private List<String> supportedTypes;
 
     private int maxHeaderLength = DEFAULT_MAX_HEADER_SIZE;
+    private int maxHeadersCount = DEFAULT_ATTACHMENT_HEADERS_MAX_COUNT;
 
     public AttachmentDeserializer(Message message) {
         this(message, Collections.singletonList("multipart/related"));
@@ -120,6 +128,9 @@ public class AttachmentDeserializer {
         // Get the maximum Header length from configuration
         maxHeaderLength = MessageUtils.getContextualInteger(message, ATTACHMENT_MAX_HEADER_SIZE,
                                                             DEFAULT_MAX_HEADER_SIZE);
+        // Get the maximum headers count
+        maxHeadersCount = MessageUtils.getContextualInteger(message, ATTACHMENT_HEADERS_MAX_COUNT,
+                                                            DEFAULT_ATTACHMENT_HEADERS_MAX_COUNT);
     }
 
     public void initializeAttachments() throws IOException {
@@ -430,7 +441,7 @@ public class AttachmentDeserializer {
         return buffer.length() != 0;
     }
 
-    private void addHeaderLine(Map<String, List<String>> heads, StringBuilder line) {
+    private void addHeaderLine(Map<String, List<String>> heads, StringBuilder line) throws IOException {
         // null lines are a nop
         final int size = line.length();
         if (size == 0) {
@@ -454,6 +465,10 @@ public class AttachmentDeserializer {
                 separator++;
             }
             value = line.substring(separator);
+        }
+
+        if (heads.size() >= maxHeadersCount) {
+            throw new IOException("The attachment contains more headers than are permitted");
         }
         List<String> v = heads.computeIfAbsent(name, k -> new ArrayList<>(1));
         v.add(value);
