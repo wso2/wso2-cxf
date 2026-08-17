@@ -29,10 +29,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
+import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.URLDataSource;
 import javax.xml.parsers.SAXParser;
@@ -691,7 +693,96 @@ public class AttachmentDeserializerTest {
     }
 
     @Test
-    public void testManyAttachments() throws Exception {
+    public void testManyAttachmentsDataHandlerIterator() throws Exception {
+        prepareAttachments();
+
+        AttachmentDeserializer ad = new AttachmentDeserializer(msg);
+        ad.initializeAttachments();
+
+        // Force it to load the attachments
+        final LazyAttachmentCollection attachments = (LazyAttachmentCollection) msg.getAttachments();
+        assertThrows("Failure expected on too many attachments", RuntimeException.class,
+            () -> {
+                // Exercise iterator() path
+                for (Map.Entry<String, DataHandler> entry : attachments.createDataHandlerMap().entrySet()) {
+                    // Just force loading
+                    assertNotNull(entry);
+                }
+            });
+    }
+
+    @Test
+    public void testManyAttachmentsLoadAll() throws Exception {
+        prepareAttachments();
+
+        AttachmentDeserializer ad = new AttachmentDeserializer(msg);
+        ad.initializeAttachments();
+
+        // Force it to load the attachments
+        try {
+            msg.getAttachments().size();
+            fail("Failure expected on too many attachments");
+        } catch (RuntimeException ex) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testManyAttachmentsIterator() throws Exception {
+        prepareAttachments();
+
+        AttachmentDeserializer ad = new AttachmentDeserializer(msg);
+        ad.initializeAttachments();
+
+        // Iterate over attachments
+        assertThrows("Failure expected on too many attachments", RuntimeException.class,
+            () -> {
+                // Exercise iterator() path
+                for (Attachment attachment : msg.getAttachments()) {
+                    // Just force loading
+                    assertNotNull(attachment);
+                }
+            }
+        );
+
+        // Iterate over attachments
+        final LazyAttachmentCollection attachments = (LazyAttachmentCollection) msg.getAttachments();
+        assertThrows("Failure expected on too many attachments", IOException.class,
+            () -> {
+                // Exercise iterator() path
+                while (attachments.hasNext()) {
+                    // Do nothing, just force loading
+                }
+            }
+        );
+
+        assertThrows("Failure expected on too many attachments", RuntimeException.class,
+            () -> attachments.add(new AttachmentImpl("contentId")));
+
+        assertThrows("Failure expected on too many attachments", RuntimeException.class,
+            () -> attachments.addAll(Collections.singletonList(new AttachmentImpl("contentId"))));
+    }
+
+    @Test
+    public void testManyAttachmentsHasNext() throws Exception {
+        prepareAttachments();
+
+        AttachmentDeserializer ad = new AttachmentDeserializer(msg);
+        ad.initializeAttachments();
+
+        // Iterate over attachments
+        final LazyAttachmentCollection attachments = (LazyAttachmentCollection) msg.getAttachments();
+        assertThrows("Failure expected on too many attachments", IOException.class,
+            () -> {
+                // Exercise iterator() path
+                while (attachments.hasNext()) {
+                    // Do nothing, just force loading
+                }
+            }
+        );
+    }
+
+    private void prepareAttachments() {
         StringBuilder sb = new StringBuilder(1000);
         sb.append("SomeHeader: foo\n")
             .append("------=_Part_34950_1098328613.1263781527359\n")
@@ -715,16 +806,6 @@ public class AttachmentDeserializerTest {
         msg = new MessageImpl();
         msg.setContent(InputStream.class, new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8)));
         msg.put(Message.CONTENT_TYPE, "multipart/related");
-        AttachmentDeserializer ad = new AttachmentDeserializer(msg);
-        ad.initializeAttachments();
-
-        // Force it to load the attachments
-        try {
-            msg.getAttachments().size();
-            fail("Failure expected on too many attachments");
-        } catch (RuntimeException ex) {
-            // expected
-        }
     }
 
     @Test
