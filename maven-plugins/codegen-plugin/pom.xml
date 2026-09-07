@@ -219,5 +219,32 @@
                 </dependency>
             </dependencies>
         </profile>
+        <profile>
+            <!--
+                Not run on JDK 8. Build-time plugin only, not shipped at runtime.
+            -->
+            <id>jdk8-skip-wsdl2java-it</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>test-integration</id>
+                                <configuration>
+                                    <pomExcludes>
+                                        <pomExclude>wsdl-artifact-resolution/pom.xml</pomExclude>
+                                    </pomExcludes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>
