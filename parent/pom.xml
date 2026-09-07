@@ -489,7 +489,7 @@
                         <useFile>${cxf.surefire.usefile}</useFile>
                         <forkCount>${cxf.surefire.fork.count}</forkCount>
                         <childDelegation>false</childDelegation>
-                        <argLine>${cxf.surefire.fork.vmargs} -D${cxf.jaxb.context.class.property}=${cxf.jaxb.context.class}</argLine>
+                        <argLine>-Duser.timezone=UTC ${cxf.surefire.fork.vmargs} -D${cxf.jaxb.context.class.property}=${cxf.jaxb.context.class}</argLine>
                         <enableAssertions>${cxf.surefire.enable.assertions}</enableAssertions>
                         <parallel>${cxf.surefire.parallel.mode}</parallel>
                         <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory" />
