@@ -359,6 +359,7 @@ public class AttachmentUtilTest {
         replay(cos);
         cos.setOutputDir(attachmentDirectory);
         cos.setThreshold(102400L);
+        cos.setMaxSize(AttachmentDeserializer.DEFAULT_ATTACHMENT_MAX_SIZE);
         verify(cos);
     }
 
@@ -371,6 +372,7 @@ public class AttachmentUtilTest {
         replay(cos);
         cos.setOutputDir(new File(attachmentDirectory));
         cos.setThreshold(102400L);
+        cos.setMaxSize(AttachmentDeserializer.DEFAULT_ATTACHMENT_MAX_SIZE);
         verify(cos);
     }
 

@@ -27,6 +27,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,6 +57,8 @@ import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
 
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
 
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -197,7 +201,15 @@ public final class EndpointReferenceUtils {
                     systemId = publicId;
                 }
                 if (systemId != null) {
-                    InputSource source = resolver.resolve(systemId, baseURI);
+                    // Run inside doPrivileged so that sm.checkPermission() calls
+                    // inside the resolver chain (SecurityActions.fileExists) stop
+                    // at this boundary and check only CXF's own permissions rather
+                    // than walking up through the JAXP schema-validator frames that
+                    // lack CXF-internal permissions.
+                    final String sid = systemId;
+                    final String buri = baseURI;
+                    InputSource source = AccessController.doPrivileged(
+                        (PrivilegedAction<InputSource>) () -> resolver.resolve(sid, buri));
                     if (source != null) {
                         impl = new LSInputImpl();
                         impl.setByteStream(source.getByteStream());
@@ -488,6 +500,25 @@ public final class EndpointReferenceUtils {
         Schema schema = serviceInfo.getProperty(Schema.class.getName(), Schema.class);
         if (schema == null) {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            try {
+                factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+            } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
+                LOG.log(Level.WARNING, "The property '" + XMLConstants.FEATURE_SECURE_PROCESSING
+                    + "' is not supported.");
+            }
+
+            try {
+                factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
+                LOG.log(Level.WARNING, "The property '" + XMLConstants.ACCESS_EXTERNAL_DTD + "' is not supported.");
+            }
+
+            try {
+                factory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
+                LOG.log(Level.WARNING, "The property '" + XMLConstants.ACCESS_EXTERNAL_SCHEMA + "' is not supported.");
+            }
+
             Map<String, byte[]> schemaSourcesMap = new LinkedHashMap<>();
             Map<String, Source> schemaSourcesMap2 = new LinkedHashMap<>();
 

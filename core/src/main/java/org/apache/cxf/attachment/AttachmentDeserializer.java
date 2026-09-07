@@ -65,11 +65,21 @@ public class AttachmentDeserializer {
      * The maximum size of the attachment. Allowed value is any of {@link Number} or {@link String}.
      */
     public static final String ATTACHMENT_MAX_SIZE = "attachment-max-size";
+    public static final long DEFAULT_ATTACHMENT_MAX_SIZE =
+        SystemPropertyAction.getInteger("org.apache.cxf.attachment-max-size", 50 * 1024 * 1024 /* 50 Mb */);
 
     /**
      * The maximum number of attachments permitted in a message. The default is 50.
      */
     public static final String ATTACHMENT_MAX_COUNT = "attachment-max-count";
+    public static final int DEFAULT_ATTACHMENT_MAX_COUNT = 50;
+
+    /**
+     * The maximum number of attachment headers permitted in a message. The default is 500.
+     */
+    public static final String ATTACHMENT_HEADERS_MAX_COUNT = "attachment-headers-max-count";
+    public static final int DEFAULT_ATTACHMENT_HEADERS_MAX_COUNT =
+        SystemPropertyAction.getInteger("org.apache.cxf.attachment-max-headers-count", 500);
 
     /**
      * The maximum MIME Header Length. The default is 300.
@@ -108,6 +118,7 @@ public class AttachmentDeserializer {
     private List<String> supportedTypes;
 
     private int maxHeaderLength = DEFAULT_MAX_HEADER_SIZE;
+    private int maxHeadersCount = DEFAULT_ATTACHMENT_HEADERS_MAX_COUNT;
 
     public AttachmentDeserializer(Message message) {
         this(message, Collections.singletonList("multipart/related"));
@@ -120,13 +131,16 @@ public class AttachmentDeserializer {
         // Get the maximum Header length from configuration
         maxHeaderLength = MessageUtils.getContextualInteger(message, ATTACHMENT_MAX_HEADER_SIZE,
                                                             DEFAULT_MAX_HEADER_SIZE);
+        // Get the maximum headers count
+        maxHeadersCount = MessageUtils.getContextualInteger(message, ATTACHMENT_HEADERS_MAX_COUNT,
+                                                            DEFAULT_ATTACHMENT_HEADERS_MAX_COUNT);
     }
 
     public void initializeAttachments() throws IOException {
         initializeRootMessage();
 
         Object maxCountProperty = message.getContextualProperty(AttachmentDeserializer.ATTACHMENT_MAX_COUNT);
-        int maxCount = 50;
+        int maxCount = DEFAULT_ATTACHMENT_MAX_COUNT;
         if (maxCountProperty != null) {
             if (maxCountProperty instanceof Integer) {
                 maxCount = (Integer)maxCountProperty;
@@ -430,7 +444,7 @@ public class AttachmentDeserializer {
         return buffer.length() != 0;
     }
 
-    private void addHeaderLine(Map<String, List<String>> heads, StringBuilder line) {
+    private void addHeaderLine(Map<String, List<String>> heads, StringBuilder line) throws IOException {
         // null lines are a nop
         final int size = line.length();
         if (size == 0) {
@@ -454,6 +468,10 @@ public class AttachmentDeserializer {
                 separator++;
             }
             value = line.substring(separator);
+        }
+
+        if (heads.size() >= maxHeadersCount) {
+            throw new IOException("The attachment contains more headers than are permitted");
         }
         List<String> v = heads.computeIfAbsent(name, k -> new ArrayList<>(1));
         v.add(value);
