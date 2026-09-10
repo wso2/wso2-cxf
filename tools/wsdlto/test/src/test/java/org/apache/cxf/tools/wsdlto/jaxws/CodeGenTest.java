@@ -229,6 +229,8 @@ public class CodeGenTest extends AbstractCodeGenTest {
 
     @Test
     public void testHeaderFromAnotherMessage5() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/OutOfBandHeaderBug.wsdl"));
         env.put(ToolConstants.CFG_EXTRA_SOAPHEADER, "TRUE");
         processor.setContext(env);
@@ -713,6 +715,8 @@ public class CodeGenTest extends AbstractCodeGenTest {
 
     @Test
     public void testSchemaImport() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/hello_world_schema_import.wsdl"));
         processor.setContext(env);
         processor.execute();
@@ -750,6 +754,8 @@ public class CodeGenTest extends AbstractCodeGenTest {
 
     @Test
     public void testExceptionNameCollision() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/InvoiceServer.wsdl"));
 
         processor.setContext(env);
@@ -1010,6 +1016,8 @@ public class CodeGenTest extends AbstractCodeGenTest {
 
     @Test
     public void testWebFault() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/InvoiceServer-issue305570.wsdl"));
         processor.setContext(env);
         processor.execute();
@@ -1033,6 +1041,8 @@ public class CodeGenTest extends AbstractCodeGenTest {
 
     @Test
     public void testMultiSchemaParsing() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/multi_schema.wsdl"));
 
         processor.setContext(env);
@@ -1213,6 +1223,8 @@ public class CodeGenTest extends AbstractCodeGenTest {
 
     @Test
     public void testRefTNS() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/locator.wsdl"));
         processor.setContext(env);
         processor.execute();
@@ -1600,6 +1612,8 @@ public class CodeGenTest extends AbstractCodeGenTest {
     }
     @Test
     public void testNoTargetNamespaceSchema() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/cxf6580/hello_import.wsdl"));
         env.put(ToolConstants.CFG_CATALOG, getLocation("/wsdl2java_wsdl/cxf6580/catalog.xml"));
 
