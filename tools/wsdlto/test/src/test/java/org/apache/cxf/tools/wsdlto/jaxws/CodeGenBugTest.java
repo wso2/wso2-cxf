@@ -70,6 +70,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
     @Test
     public void testCXF2944() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/cxf2944/cxf2944.wsdl"));
         env.put(ToolConstants.CFG_ALLOW_ELEMENT_REFS, "true");
         processor.setContext(env);
@@ -82,6 +84,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
     @Test
     public void testCXF2935() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/cxf2935/webservice.wsdl"));
         env.put(ToolConstants.CFG_ALLOW_ELEMENT_REFS, "true");
         processor.setContext(env);
@@ -430,6 +434,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
     @Test
     public void testLocatorWithJaxbBinding() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/locator_with_jaxbbinding.wsdl"));
         processor.setContext(env);
         processor.execute();
@@ -486,6 +492,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
     // CXF-492
     @Test
     public void testDefaultNsMap() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_ALL, ToolConstants.CFG_ALL);
         env.put(ToolConstants.CFG_NO_ADDRESS_BINDING, ToolConstants.CFG_NO_ADDRESS_BINDING);
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/cxf492/locator.wsdl"));
@@ -505,6 +513,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
     @Test
     public void testDefaultNsMapExclude() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_ALL, ToolConstants.CFG_ALL);
         env.put(ToolConstants.CFG_NEXCLUDE,
                 "http://www.w3.org/2005/08/addressing=org.apache.cxf.ws.addressing");
@@ -606,6 +616,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
     @Test
     public void testWebResult() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
 
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/sayHi.wsdl"));
         processor.setContext(env);
@@ -927,6 +939,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
     @Test
     public void testJaxbCatalog() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/cxf1112/myservice.wsdl"));
         env.put(ToolConstants.CFG_CATALOG, getLocation("/wsdl2java_wsdl/cxf1112/catalog.xml"));
         env.put(ToolConstants.CFG_BINDING, getLocation("/wsdl2java_wsdl/cxf1112/jaxbbinding.xml"));
@@ -958,6 +972,8 @@ public class CodeGenBugTest extends AbstractCodeGenTest {
 
     @Test
     public void testServer() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/InvoiceServer.wsdl"));
         env.put(ToolConstants.CFG_BINDING, new String[] {getLocation("/wsdl2java_wsdl/cxf1141/jaxws.xml"),
                                                          getLocation("/wsdl2java_wsdl/cxf1141/jaxb.xml")});
