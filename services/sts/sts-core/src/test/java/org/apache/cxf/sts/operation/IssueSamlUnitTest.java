@@ -28,6 +28,7 @@ import java.util.Properties;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.security.auth.callback.CallbackHandler;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
@@ -65,6 +66,7 @@ import org.apache.wss4j.common.WSS4JConstants;
 import org.apache.wss4j.common.crypto.Crypto;
 import org.apache.wss4j.common.crypto.CryptoFactory;
 import org.apache.wss4j.common.crypto.CryptoType;
+import org.apache.wss4j.common.ext.WSPasswordCallback;
 import org.apache.wss4j.common.principal.CustomTokenPrincipal;
 import org.apache.wss4j.common.saml.SAMLKeyInfo;
 import org.apache.wss4j.common.saml.SamlAssertionWrapper;
@@ -881,7 +883,7 @@ public class IssueSamlUnitTest {
         properties.put("org.apache.wss4j.crypto.merlin.keystore.file", "keys/servicestore.jks");
 
         data.setDecCrypto(CryptoFactory.getInstance(properties));
-        data.setCallbackHandler(new PasswordCallbackHandler());
+        data.setCallbackHandler(createPkcs12CallbackHandler());
         data.setWssConfig(WSSConfig.getNewInstance());
         data.setWsDocInfo(new WSDocInfo(assertion.getOwnerDocument()));
 
@@ -1505,5 +1507,30 @@ public class IssueSamlUnitTest {
         return properties;
     }
 
+
+
+    // Different store and key passwords not supported for PKCS12 KeyStores
+    private static CallbackHandler createPkcs12CallbackHandler() {
+        return callbacks -> {
+            for (int i = 0; i < callbacks.length; i++) {
+                if (callbacks[i] instanceof WSPasswordCallback) { // CXF
+                    WSPasswordCallback pc = (WSPasswordCallback) callbacks[i];
+                    if ("alice".equals(pc.getIdentifier())) {
+                        pc.setPassword("clarinet");
+                        break;
+                    } else if ("bob".equals(pc.getIdentifier())) {
+                        pc.setPassword("trombone");
+                        break;
+                    } else if ("mystskey".equals(pc.getIdentifier())) {
+                        pc.setPassword("sspass");
+                        break;
+                    } else if ("myservicekey".equals(pc.getIdentifier())) {
+                        pc.setPassword("sspass");
+                        break;
+                    }
+                }
+            }
+        };
+    }
 
 }
