@@ -235,6 +235,8 @@ public class CodeGenOptionTest extends AbstractCodeGenTest {
 
     @Test
     public void testGetCatalog() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/test_catalog_replaceme.wsdl"));
         env.put(ToolConstants.CFG_CATALOG, getLocation("/wsdl2java_wsdl/test_catalog.xml"));
         env.put(ToolConstants.CFG_COMPILE, null);
@@ -246,6 +248,8 @@ public class CodeGenOptionTest extends AbstractCodeGenTest {
 
     @Test
     public void testGetCatalogPublic() throws Exception {
+        // Not run on JDK 8.
+        org.junit.Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version")));
         env.put(ToolConstants.CFG_WSDLURL, getLocation("/wsdl2java_wsdl/cxf1053/myservice.wsdl"));
         env.put(ToolConstants.CFG_CATALOG, getLocation("/wsdl2java_wsdl/cxf1053/catalog.xml"));
         env.put(ToolConstants.CFG_COMPILE, null);

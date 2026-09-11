@@ -18,7 +18,10 @@
  */
 package org.apache.cxf.systest.type_test.soap;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.Holder;
@@ -27,9 +30,12 @@ import javax.xml.ws.soap.SOAPFaultException;
 import org.apache.cxf.systest.type_test.AbstractTypeTestClient5;
 import org.apache.type_test.types1.FixedArray;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -40,6 +46,35 @@ public class SOAPDocLitClientTypeTest extends AbstractTypeTestClient5 {
     protected static final QName PORT_NAME = new QName("http://apache.org/type_test/doc", "SOAPPort");
     static final String PORT = SOAPDocLitServerImpl.PORT;
 
+
+    // Not run on JDK 8.
+    private static final Set<String> JDK8_SKIPPED = new HashSet<>(Arrays.asList(
+            "testAnyURIRestriction",
+            "testBase64Binary",
+            "testBase64BinaryRestriction",
+            "testComplexRestriction",
+            "testComplexRestriction2",
+            "testComplexRestriction3",
+            "testComplexRestriction4",
+            "testComplexRestriction5",
+            "testHexBinaryRestriction",
+            "testSimpleListRestriction2",
+            "testSimpleRestriction",
+            "testSimpleRestriction2",
+            "testSimpleRestriction3",
+            "testSimpleRestriction4",
+            "testSimpleRestriction5",
+            "testSimpleRestriction6",
+            "testValidationFailureOnServerOut"));
+
+    @Rule
+    public TestName testName = new TestName();
+
+    @Before
+    public void skipOnJdk8() {
+        Assume.assumeFalse("1.8".equals(System.getProperty("java.specification.version"))
+            && JDK8_SKIPPED.contains(testName.getMethodName()));
+    }
 
     @Before
     public void updatePort() throws Exception {
