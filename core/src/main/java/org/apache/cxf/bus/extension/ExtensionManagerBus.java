@@ -284,26 +284,75 @@ public class ExtensionManagerBus extends AbstractBasicInterceptorProvider implem
         if (state == BusState.SHUTTING_DOWN) {
             return;
         }
-        BusLifeCycleManager lifeCycleManager = this.getExtension(BusLifeCycleManager.class);
-        if (null != lifeCycleManager) {
-            lifeCycleManager.preShutdown();
+
+        // Run every shutdown phase even when an earlier phase fails. Later phases
+        // may be responsible for releasing resources owned by the bus.
+        RuntimeException firstException = null;
+        BusLifeCycleManager lifeCycleManager = null;
+        try {
+            lifeCycleManager = this.getExtension(BusLifeCycleManager.class);
+            if (null != lifeCycleManager) {
+                lifeCycleManager.preShutdown();
+            }
+        } catch (RuntimeException ex) {
+            firstException = ex;
         }
+
         synchronized (this) {
             state = BusState.SHUTTING_DOWN;
         }
-        destroyBeans();
+
+        try {
+            destroyBeans();
+        } catch (RuntimeException ex) {
+            if (firstException == null) {
+                firstException = ex;
+            } else if (firstException != ex) {
+                firstException.addSuppressed(ex);
+            }
+        }
+
         synchronized (this) {
             state = BusState.SHUTDOWN;
             notifyAll();
         }
+
         if (null != lifeCycleManager) {
-            lifeCycleManager.postShutdown();
+            try {
+                lifeCycleManager.postShutdown();
+            } catch (RuntimeException ex) {
+                if (firstException == null) {
+                    firstException = ex;
+                } else if (firstException != ex) {
+                    firstException.addSuppressed(ex);
+                }
+            }
         }
 
-        if (BusFactory.getDefaultBus(false) == this) {
-            BusFactory.setDefaultBus(null);
+        try {
+            if (BusFactory.getDefaultBus(false) == this) {
+                BusFactory.setDefaultBus(null);
+            }
+        } catch (RuntimeException ex) {
+            if (firstException == null) {
+                firstException = ex;
+            } else if (firstException != ex) {
+                firstException.addSuppressed(ex);
+            }
         }
-        BusFactory.clearDefaultBusForAnyThread(this);
+        try {
+            BusFactory.clearDefaultBusForAnyThread(this);
+        } catch (RuntimeException ex) {
+            if (firstException == null) {
+                firstException = ex;
+            } else if (firstException != ex) {
+                firstException.addSuppressed(ex);
+            }
+        }
+
+        if (firstException != null) {
+            throw firstException;
+        }
     }
 
     public BusState getState() {

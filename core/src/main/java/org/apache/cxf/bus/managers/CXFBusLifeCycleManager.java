@@ -92,24 +92,54 @@ public class CXFBusLifeCycleManager implements BusLifeCycleManager {
     public void preShutdown() {
         if (!preShutdownCalled) {
             preShutdownCalled = true;
+            // A failing listener must not prevent the remaining listeners from
+            // releasing their resources (e.g. the cached output stream cleaner thread).
+            RuntimeException firstException = null;
             ListIterator<BusLifeCycleListener> li = listeners.listIterator(listeners.size());
             while (li.hasPrevious()) {
-                li.previous().preShutdown();
+                try {
+                    li.previous().preShutdown();
+                } catch (RuntimeException ex) {
+                    if (firstException == null) {
+                        firstException = ex;
+                    } else if (firstException != ex) {
+                        firstException.addSuppressed(ex);
+                    }
+                }
+            }
+            if (firstException != null) {
+                throw firstException;
             }
         }
     }
 
     public void postShutdown() {
+        RuntimeException firstException = null;
         if (!preShutdownCalled) {
-            preShutdown();
+            try {
+                preShutdown();
+            } catch (RuntimeException ex) {
+                firstException = ex;
+            }
         }
         if (!postShutdownCalled) {
             postShutdownCalled = true;
             ListIterator<BusLifeCycleListener> li = listeners.listIterator(listeners.size());
             while (li.hasPrevious()) {
-                li.previous().postShutdown();
+                try {
+                    li.previous().postShutdown();
+                } catch (RuntimeException ex) {
+                    if (firstException == null) {
+                        firstException = ex;
+                    } else if (firstException != ex) {
+                        firstException.addSuppressed(ex);
+                    }
+                }
             }
 
+        }
+        if (firstException != null) {
+            throw firstException;
         }
     }
 
