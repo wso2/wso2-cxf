@@ -19,10 +19,14 @@
 
 package org.apache.cxf.bus;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.Bus.BusState;
 import org.apache.cxf.BusException;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.binding.BindingFactoryManager;
@@ -38,9 +42,12 @@ import org.easymock.EasyMock;
 import org.easymock.IMocksControl;
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 public class CXFBusImplTest {
 
@@ -125,6 +132,120 @@ public class CXFBusImplTest {
         bus.shutdown(true);
         EasyMock.verify(listener);
         bus.shutdown(true);
+    }
+
+    @Test
+    public void testShutdownRunsAllPhasesWhenPreShutdownFails() {
+        final ExtensionManagerBus bus = new ExtensionManagerBus();
+        BusFactory.setDefaultBus(bus);
+        BusFactory.setThreadDefaultBus(bus);
+        BusLifeCycleManager lifeCycleManager = bus.getExtension(BusLifeCycleManager.class);
+        List<String> calls = new ArrayList<>();
+        // listeners are notified in reverse registration order, so the failing one runs first
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("cleaner", calls, null, null));
+        RuntimeException preFailure = new IllegalStateException("pre");
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("server", calls, preFailure, null));
+
+        try {
+            bus.shutdown(true);
+            fail("Expected the preShutdown failure to be rethrown");
+        } catch (IllegalStateException ex) {
+            assertSame(preFailure, ex);
+            assertEquals(0, ex.getSuppressed().length);
+        }
+        assertEquals(Arrays.asList("server.pre", "cleaner.pre", "server.post", "cleaner.post"), calls);
+        assertEquals(BusState.SHUTDOWN, bus.getState());
+        assertNull(BusFactory.getDefaultBus(false));
+        assertNull(BusFactory.getThreadDefaultBus(false));
+    }
+
+    @Test
+    public void testShutdownRethrowsFirstFailureWithLaterOnesSuppressed() {
+        final ExtensionManagerBus bus = new ExtensionManagerBus();
+        BusLifeCycleManager lifeCycleManager = bus.getExtension(BusLifeCycleManager.class);
+        List<String> calls = new ArrayList<>();
+        RuntimeException postFailure1 = new IllegalArgumentException("post1");
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("first", calls, null, postFailure1));
+        RuntimeException preFailure = new IllegalStateException("pre");
+        RuntimeException postFailure2 = new IllegalArgumentException("post2");
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("second", calls, preFailure, postFailure2));
+
+        try {
+            bus.shutdown(true);
+            fail("Expected the preShutdown failure to be rethrown");
+        } catch (IllegalStateException ex) {
+            assertSame(preFailure, ex);
+            // the lifecycle manager reports its own first failure, with later listener failures suppressed on it
+            assertArrayEquals(new Throwable[] {postFailure2}, ex.getSuppressed());
+            assertArrayEquals(new Throwable[] {postFailure1}, postFailure2.getSuppressed());
+        }
+        assertEquals(Arrays.asList("second.pre", "first.pre", "second.post", "first.post"), calls);
+        assertEquals(BusState.SHUTDOWN, bus.getState());
+    }
+
+    @Test
+    public void testShutdownRunsAllPostShutdownListenersWhenOneFails() {
+        final ExtensionManagerBus bus = new ExtensionManagerBus();
+        BusFactory.setDefaultBus(bus);
+        BusLifeCycleManager lifeCycleManager = bus.getExtension(BusLifeCycleManager.class);
+        List<String> calls = new ArrayList<>();
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("cleaner", calls, null, null));
+        RuntimeException postFailure = new IllegalStateException("post");
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("server", calls, null, postFailure));
+
+        try {
+            bus.shutdown(true);
+            fail("Expected the postShutdown failure to be rethrown");
+        } catch (IllegalStateException ex) {
+            assertSame(postFailure, ex);
+        }
+        assertEquals(Arrays.asList("server.pre", "cleaner.pre", "server.post", "cleaner.post"), calls);
+        assertEquals(BusState.SHUTDOWN, bus.getState());
+        assertNull(BusFactory.getDefaultBus(false));
+    }
+
+    @Test
+    public void testShutdownWithoutFailuresIsUnchanged() {
+        final ExtensionManagerBus bus = new ExtensionManagerBus();
+        BusLifeCycleManager lifeCycleManager = bus.getExtension(BusLifeCycleManager.class);
+        List<String> calls = new ArrayList<>();
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("a", calls, null, null));
+        lifeCycleManager.registerLifeCycleListener(new RecordingListener("b", calls, null, null));
+        bus.shutdown(true);
+        assertEquals(Arrays.asList("b.pre", "a.pre", "b.post", "a.post"), calls);
+        assertEquals(BusState.SHUTDOWN, bus.getState());
+    }
+
+    private static final class RecordingListener implements BusLifeCycleListener {
+        private final String name;
+        private final List<String> calls;
+        private final RuntimeException preFailure;
+        private final RuntimeException postFailure;
+
+        RecordingListener(String name, List<String> calls, RuntimeException preFailure,
+                          RuntimeException postFailure) {
+            this.name = name;
+            this.calls = calls;
+            this.preFailure = preFailure;
+            this.postFailure = postFailure;
+        }
+
+        public void initComplete() {
+        }
+
+        public void preShutdown() {
+            calls.add(name + ".pre");
+            if (preFailure != null) {
+                throw preFailure;
+            }
+        }
+
+        public void postShutdown() {
+            calls.add(name + ".post");
+            if (postFailure != null) {
+                throw postFailure;
+            }
+        }
     }
 
 }
