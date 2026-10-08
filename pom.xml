@@ -18,10 +18,17 @@
   under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <parent>
+        <groupId>org.wso2</groupId>
+        <artifactId>wso2</artifactId>
+        <version>1.3</version>
+        <relativePath/>
+    </parent>
+
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.cxf</groupId>
     <artifactId>cxf</artifactId>
-    <version>3.5.11</version>
+    <version>3.5.11-FISGLOBALSUB-hotfix-1-SNAPSHOT</version>
     <name>Apache CXF</name>
     <description>Apache CXF is an open-source services framework that aids in 
     the development of services using front-end programming APIs, like JAX-WS 
@@ -29,16 +36,17 @@
     <url>https://cxf.apache.org</url>
     <packaging>pom</packaging>
     <scm>
-        <connection>scm:git:https://gitbox.apache.org/repos/asf/cxf.git</connection>
-        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/cxf.git</developerConnection>
-        <url>https://gitbox.apache.org/repos/asf?p=cxf.git;a=summary</url>
-        <tag>cxf-3.5.11</tag>
+        <connection>scm:git:https://github.com/wso2/wso2-cxf.git</connection>
+        <developerConnection>scm:git:https://github.com/wso2/wso2-cxf.git</developerConnection>
+        <url>https://github.com/wso2/wso2-cxf</url>
+        <tag>HEAD</tag>
     </scm>
     <issueManagement>
         <system>jira</system>
         <url>https://issues.apache.org/jira/browse/CXF</url>
     </issueManagement>
     <properties>
+        <project.scm.id>scm-server</project.scm.id>
         <cxf.compiler.fork>false</cxf.compiler.fork>
         <cxf.build-utils.version>3.4.4</cxf.build-utils.version>
         <cxf.xjc-utils.version>3.3.4</cxf.xjc-utils.version>
@@ -49,15 +57,14 @@
     </properties>
     <distributionManagement>
         <repository>
-            <id>apache.releases.https</id>
-            <name>Apache Release Distribution Repository</name>
-            <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
+            <id>nexus-releases</id>
+            <name>WSO2 Release Distribution Repository</name>
+            <url>https://maven.wso2.org/nexus/service/local/staging/deploy/maven2/</url>
         </repository>
         <snapshotRepository>
-            <id>apache.snapshots.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repository.apache.org/content/repositories/snapshots</url>
-            <!--uniqueVersion>false</uniqueVersion-->
+            <id>wso2.snapshots</id>
+            <name>WSO2 Snapshot Repository</name>
+            <url>https://maven.wso2.org/nexus/content/repositories/snapshots/</url>
         </snapshotRepository>
         <site>
             <id>apache.cxf.site</id>
@@ -460,7 +467,6 @@
                         <useReleaseProfile>false</useReleaseProfile>
                         <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>
-                        <arguments>-Prelease,deploy</arguments>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                     </configuration>
                 </plugin>
